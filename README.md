@@ -11,7 +11,7 @@ A full-stack todo application built with React, Node.js, and PostgreSQL.
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
+git clone https://github.com/isthaffa/todo-sub.git
 cd todo-sub
 ```
 
