@@ -1,51 +1,51 @@
 version: '3.8'
 
 services:
-  db:
-    image: postgres:13
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: todos
-    volumes:
-      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    networks:
-      - app-network
-
-  backend:
-    build: ./backend
-    environment:
-      DB_USER: postgres
-      DB_HOST: db
-      DB_NAME: todos
-      DB_PASSWORD: postgres
-      DB_PORT: 5432
-      PORT: 3001
-    depends_on:
-      db:
-        condition: service_healthy
-    networks:
-      - app-network
-
   frontend:
-    build: ./frontend
-    environment:
-      REACT_APP_API_URL: http://backend:3001
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     ports:
-      - "3000:80"
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - REACT_APP_API_URL=http://localhost:5001
     depends_on:
       - backend
-    networks:
-      - app-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=todo_db
+      - PORT=5001
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=todo_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
 
 volumes:
   postgres_data:
-
-networks:
-  app-network:
